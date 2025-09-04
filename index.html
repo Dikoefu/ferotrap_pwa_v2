@@ -2,86 +2,106 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ferotrap NFC</title>
-  <link rel="manifest" href="manifest.json">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Ferotrap PWA</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json">
+
+  <!-- Icons for iOS fallback -->
+  <link rel="icon" href="/icons/icon-192.png" type="image/png">
+  <meta name="theme-color" content="#000000">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+    }
+    button {
+      display: block;
+      margin: 20px auto;
+      padding: 15px 30px;
+      font-size: 18px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background-color: gray;
+      cursor: not-allowed;
+    }
+    textarea {
+      width: 100%;
+      min-height: 80px;
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
-  <h1>DATA FEROTRAP</h1>
+  <h1>Ferotrap PWA</h1>
 
-  <label>Nama Pengamat</label><br>
-  <input id="nama" type="text"><br>
+  <textarea id="nfcData" placeholder="Data NFC akan muncul di sini..."></textarea>
 
-  <label>Tanggal Pengamatan</label><br>
-  <input id="tanggal" type="date"><br>
-
-  <label>AFD/BLOK</label><br>
-  <input id="afd" type="text"><br>
-
-  <label>Nomor</label><br>
-  <input id="nomor" type="text"><br>
-
-  <label>Kondisi</label><br>
-  <input id="kondisi" type="text"><br>
-
-  <label>Tangkapan (%)</label><br>
-  <input id="tangkapan" type="text"><br><br>
-
-  <button id="readNfc">Baca Data</button>
-  <button id="writeNfc">Tulis Data</button>
+  <button id="readBtn">Baca Data NFC</button>
+  <button id="writeBtn">Tulis Data NFC</button>
 
   <script>
+    // Register Service Worker
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js');
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(reg => console.log('Service Worker registered:', reg))
+          .catch(err => console.error('Service Worker registration failed:', err));
+      });
     }
 
-    // Baca Data
-    document.getElementById('readNfc').addEventListener('click', async () => {
-      if ('NDEFReader' in window) {
-        alert('Aplikasi siap membaca NFC.\nDekatkan tag NFC ke perangkat.');
-        try {
-          const reader = new NDEFReader();
-          await reader.scan();
-          reader.onreading = event => {
-            const decoder = new TextDecoder();
-            for (const record of event.message.records) {
-              const data = decoder.decode(record.data);
-              // Split saved data into fields
-              const parts = data.split('|');
-              if(parts.length>=6){
-                document.getElementById('nama').value = parts[0];
-                document.getElementById('tanggal').value = parts[1];
-                document.getElementById('afd').value = parts[2];
-                document.getElementById('nomor').value = parts[3];
-                document.getElementById('kondisi').value = parts[4];
-                document.getElementById('tangkapan').value = parts[5];
-              }
-            }
-            alert('Data berhasil dibaca dari NFC');
-          };
-        } catch (error) {
-          alert('Error reading NFC: ' + error);
-        }
-      } else {
-        alert('Web NFC tidak didukung pada perangkat/browser ini.');
+    const readBtn = document.getElementById('readBtn');
+    const writeBtn = document.getElementById('writeBtn');
+    const nfcData = document.getElementById('nfcData');
+
+    // Check Web NFC support
+    if ('NDEFReader' in window) {
+      readBtn.disabled = false;
+      writeBtn.disabled = false;
+    } else {
+      readBtn.disabled = true;
+      writeBtn.disabled = true;
+      alert('Web NFC tidak didukung di browser ini.');
+    }
+
+    // Read NFC
+    readBtn.addEventListener('click', async () => {
+      try {
+        const ndef = new NDEFReader();
+        await ndef.scan();
+        alert('Dekatkan kartu NFC untuk membaca data...');
+        ndef.onreading = event => {
+          const decoder = new TextDecoder();
+          let text = '';
+          for (const record of event.message.records) {
+            text += decoder.decode(record.data);
+          }
+          nfcData.value = text;
+          alert('Data berhasil dibaca!');
+        };
+      } catch (err) {
+        console.error(err);
+        alert('Gagal membaca NFC: ' + err);
       }
     });
 
-    // Tulis Data
-    document.getElementById('writeNfc').addEventListener('click', async () => {
-      if ('NDEFReader' in window) {
-        alert('Aplikasi siap menulis ke NFC.\nDekatkan tag NFC ke perangkat.');
-        try {
-          const writer = new NDEFReader();
-          await writer.write(
-            `${document.getElementById('nama').value}|${document.getElementById('tanggal').value}|${document.getElementById('afd').value}|${document.getElementById('nomor').value}|${document.getElementById('kondisi').value}|${document.getElementById('tangkapan').value}`
-          );
-          alert('Data berhasil ditulis ke NFC');
-        } catch (error) {
-          alert('Error writing NFC: ' + error);
-        }
-      } else {
-        alert('Web NFC tidak didukung pada perangkat/browser ini.');
+    // Write NFC
+    writeBtn.addEventListener('click', async () => {
+      try {
+        const ndef = new NDEFReader();
+        await ndef.write(nfcData.value || 'Data Kosong');
+        alert('Dekatkan kartu NFC untuk menulis data...');
+      } catch (err) {
+        console.error(err);
+        alert('Gagal menulis NFC: ' + err);
       }
     });
   </script>
