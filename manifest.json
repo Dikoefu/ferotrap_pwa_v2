@@ -1,0 +1,30 @@
+{
+  "name": "Ferotrap NFC",
+  "short_name": "Ferotrap",
+  "description": "Offline NFC data capture app",
+  "id": "/",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0044aa",
+  "orientation": "portrait-primary",
+  "dir": "ltr",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["utilities"],
+  "screenshots": [],
+  "prefer_related_applications": false,
+  "related_applications": []
+}
