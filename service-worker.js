@@ -1,48 +1,48 @@
-// service-worker.js
+// Nama cache untuk versi saat ini
 const CACHE_NAME = 'ferotrap-cache-v1';
-const urlsToCache = [
-  '/',                 // index.html
+
+// Daftar file yang mau di-cache (tambahkan sesuai kebutuhan)
+const FILES_TO_CACHE = [
+  '/',
   '/index.html',
   '/manifest.json',
   '/service-worker.js',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
-  // Add your CSS, JS, images, etc. here:
-  // '/styles.css',
-  // '/app.js'
+  '/icons/icon-144.png'
 ];
 
-// Install event – cache all core files
+// Event install: caching file2
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(FILES_TO_CACHE);
+    })
   );
+  self.skipWaiting();
 });
 
-// Activate event – clean up old caches
+// Event activate: hapus cache lama
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
-        cacheNames.map(name => {
-          if (name !== CACHE_NAME) {
-            return caches.delete(name);
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
           }
         })
       );
     })
   );
+  self.clients.claim();
 });
 
-// Fetch event – serve from cache first
+// Event fetch: ambil dari cache dulu baru jaringan
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        return response || fetch(event.request);
-      })
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request);
+    })
   );
 });
